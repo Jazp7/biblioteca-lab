@@ -9,10 +9,7 @@ const rl = readline.createInterface({
 // nuevo edit en el código
 // nuevo edit en el código .
 
-<<<<<<< HEAD
 // La nueva función va aquí
-=======
 function myfuncion () {
     console.log("hola")
 }
->>>>>>> 3fa7abb5e6027f8223e035511ce462e00655603e
