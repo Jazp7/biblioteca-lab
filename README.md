@@ -1,0 +1,1 @@
+Resolución del laboratorio de Programación Estructurada
