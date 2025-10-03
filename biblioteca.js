@@ -10,8 +10,7 @@ const estudiantes = [
     { id: 1, nombre: "Ana García", grado: 9, librosPrestados: 0, multas: 0, activo: true }, 
     { id: 2, nombre: "Carlos Ruiz", grado: 7, librosPrestados: 3, multas: 15, activo: true }, 
     { id: 3, nombre: "María López", grado: 9, librosPrestados: 0, multas: 0, activo: true }, 
-    { id: 4, nombre: "José Martínez", grado: 8, librosPrestados: 1, multas: 50, activo: false 
-} 
+    { id: 4, nombre: "José Martínez", grado: 8, librosPrestados: 1, multas: 50, activo: false } 
 ]; 
  
 const libros = [ 
