@@ -85,3 +85,22 @@ function mostrarEncabezado(titulo) {
     console.log(`  ${titulo}`);
     console.log("═".repeat(50) + "\n");
 }
+
+
+async function cargarPrograma() {
+    // Pantalla de "carga"
+    mostrarEncabezado("SISTEMA DE GESTIÓN DE BIBLIOTECA ESCOLAR") 
+    console.log("\nBienvenido al sistema de préstamos")
+    console.log("\n  Versión 1.0")
+    console.log("")
+    await pausar()
+    limpiarPantalla()
+    // console.log("Hello!") <--- El código funciona muy bien hasta aquí
+}
+
+// ===== Función de inicio ===== 
+function iniciarPrograma() {
+    cargarPrograma()
+}
+
+iniciarPrograma()
