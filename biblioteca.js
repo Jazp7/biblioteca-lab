@@ -99,6 +99,16 @@ function formatearLibros() {
     return filasFormateadas
 }
 
+function verificarSiHayLibrosDisponibles() {
+    const librosDisponibles = libros.filter(libro => libro.disponible === true);
+
+    if (librosDisponibles.length === 0) {
+        return "No hay libros disponibles";
+    } else {
+        return librosDisponibles;
+    }
+}
+
 // ===== FUNCIONES DE BÚSQUEDA ===== 
 
 function buscarEstudiante(id) {
@@ -188,7 +198,7 @@ async function verCatalogoDeLibros() {
     mostrarEncabezado("CATÁLOGO DE LIBROS")
     console.log(" Código | Título                        | Categoría | Estado ")
     console.log(" —————————————————————————————————————————————————————————————————")
-    
+
     const filasDeLibros = formatearLibros();
 
     filasDeLibros.forEach(linea => {
@@ -197,6 +207,22 @@ async function verCatalogoDeLibros() {
 
     await pausar("regresar")
     limpiarPantalla()
+}
+
+async function verLibrosDisponibles() {
+    mostrarEncabezado("LIBROS DISPONIBLES");
+    const librosQueEstanDisponibles = verificarSiHayLibrosDisponibles();
+
+    if (Array.isArray(librosQueEstanDisponibles)) {
+        for (const libro of librosQueEstanDisponibles) {
+            console.log(`${libro.codigo} - ${libro.titulo} - ${libro.categoria}`);
+        }
+    } else {
+        console.log(librosQueEstanDisponibles);
+    }
+
+    await pausar("regresar");
+    limpiarPantalla();
 }
 
 // ===== Función Administradora ===== 
@@ -216,6 +242,10 @@ async function iniciarPrograma() {
                 limpiarPantalla();
                 await verCatalogoDeLibros();
                 break;
+            case "3":
+                limpiarPantalla();
+                await verLibrosDisponibles();
+                break
             case "0":
                 limpiarPantalla();
                 console.log("\nSaliendo del sistema. ¡Hasta pronto!");
