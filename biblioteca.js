@@ -29,9 +29,9 @@ function limpiarPantalla() {
     console.clear();
 }
 
-function pausar() {
+function pausar(proceso) {
     return new Promise(resolve => {
-        rl.question('\nPresione ENTER para continuar...', () => {
+        rl.question(`\nPresione ENTER para ${proceso}...`, () => {
             resolve();
         });
     });
@@ -43,6 +43,40 @@ function pregunta(texto) {
             resolve(respuesta);
         });
     });
+}
+
+// ===== Funciones auxiliares 2 =====
+function formatearEstudiantes() {
+    // Definimos las longitudes máximas para cada columna, esto es clave para la alineación.
+    const ID_LEN = 3;
+    const NOMBRE_LEN = 20;
+    const GRADO_LEN = 7;
+    const LIBROS_LEN = 8;
+    const MULTAS_LEN = 8;
+    const ESTADO_LEN = 8;
+
+    const filasFormateadas = estudiantes.map(estudiante => {
+        // Formatear el estado, las multas y el grado
+        const estadoTexto = estudiante.activo ? "Activo" : "Inactivo";
+        const multasTexto = `${estudiante.multas}`;
+        const gradoTexto = `${estudiante.grado}°`;
+
+        // Aplicar el "padding" (espaciado) a cada columna
+        // str.toString().padEnd(length, ' ') asegura que el string tenga el largo definido
+
+        const ID_col = estudiante.id.toString().padEnd(ID_LEN, ' ');
+        const Nombre_col = estudiante.nombre.padEnd(NOMBRE_LEN, ' ');
+        const Grado_col = gradoTexto.padEnd(GRADO_LEN, ' ');
+        const Libros_col = estudiante.librosPrestados.toString().padEnd(LIBROS_LEN, ' ');
+        const Multas_col = multasTexto.padEnd(MULTAS_LEN, ' ');
+        const Estado_col = estadoTexto.padEnd(ESTADO_LEN, ' '); // El Estado_col no necesita padEnd si es el último
+
+        // Unir todas las columnas con el separador "|"
+        return ` ${ID_col}| ${Nombre_col}| ${Grado_col}| ${Libros_col}| ${Multas_col}| ${Estado_col}`;
+    });
+
+    return filasFormateadas;
+
 }
 
 // ===== FUNCIONES DE BÚSQUEDA ===== 
@@ -87,20 +121,76 @@ function mostrarEncabezado(titulo) {
 }
 
 
+// ===== Funcionalidades del sistema =====
 async function cargarPrograma() {
     // Pantalla de "carga"
-    mostrarEncabezado("SISTEMA DE GESTIÓN DE BIBLIOTECA ESCOLAR") 
+    mostrarEncabezado("SISTEMA DE GESTIÓN DE BIBLIOTECA ESCOLAR")
     console.log("\nBienvenido al sistema de préstamos")
     console.log("\n  Versión 1.0")
     console.log("")
-    await pausar()
+    await pausar("continuar")
     limpiarPantalla()
-    // console.log("Hello!") <--- El código funciona muy bien hasta aquí
 }
 
-// ===== Función de inicio ===== 
-function iniciarPrograma() {
-    cargarPrograma()
+function Inicio() {
+    mostrarEncabezado("📚 SISTEMA DE GESTIÓN DE BIBLIOTECA")
+    console.log("[1] Ver Estudiantes")
+    console.log("[2] Ver catálogo de libros")
+    console.log("[3] Ver libros disponibles")
+    console.log("[4] Revisar estado de estudiante")
+    console.log("[5] Revisar estado de libro")
+    console.log("[6] Realizar préstamo")
+    console.log("[7] Devolver libro")
+    console.log("[8] Ver historial de préstamos")
+    console.log("[0] Salir del sistema")
+    console.log("")
+}
+
+async function verRegistroDeEstudiantes() {
+    mostrarEncabezado("LISTA DE ESTUDIANTES")
+    console.log(" ID | Nombre               | Grado  | Libros  | Multas  | Estado")
+    console.log(" ————————————————————————————————————————————————————————————————")
+
+
+    // Llama a la función auxiliar para obtener el array de líneas formateadas
+    const filasDeEstudiantes = formatearEstudiantes();
+
+    // Usa forEach para imprimir CADA STRING individualmente, sin comas ni corchetes.
+    filasDeEstudiantes.forEach(linea => {
+        console.log(linea); // Imprime el texto formateado de una fila
+    });
+
+    await pausar("regresar")
+    limpiarPantalla()
+}
+
+// ===== Función Administradora ===== 
+async function iniciarPrograma() {
+    await cargarPrograma(); // Se ejecuta solo una vez al inicio.
+
+    while (true) { // Este bucle mantendrá el programa corriendo.
+        Inicio(); // Muestra el menú en cada ciclo.
+        let seleccion = await pregunta(">>> Seleccione una opción: ");
+
+        switch (seleccion) {
+            case "1":
+                limpiarPantalla();
+                await verRegistroDeEstudiantes(); // Esperamos a que la función termine.
+                break;
+            case "0":
+                limpiarPantalla();
+                console.log("\nSaliendo del sistema. ¡Hasta pronto!");
+                rl.close();
+                return; // Termina la función y el programa.
+            default:
+                limpiarPantalla();
+                console.log("Opción no válida");
+                await pausar("regresar al menú");
+                break;
+        }
+        // Al terminar un caso, el bucle vuelve a empezar y muestra el menú de nuevo.
+        limpiarPantalla(); // Limpiamos la pantalla para la siguiente iteración del menú.
+    }
 }
 
 iniciarPrograma()
