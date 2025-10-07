@@ -79,6 +79,26 @@ function formatearEstudiantes() {
 
 }
 
+function formatearLibros() {
+    const CODE_LEN = 7
+    const TITLE_LEN = 30
+    const CATEGORY_LEN = 10
+    const STATE_LEN = 8
+
+    const filasFormateadas = libros.map(libro => {
+        const estadoLibro = libro.disponible ? "Disponible" : "Prestado"
+
+        const CODE_col = libro.codigo.toString().padEnd(CODE_LEN, ' ')
+        const TITLE_col = libro.titulo.padEnd(TITLE_LEN, ' ')
+        const CATEGORY_col = libro.categoria.padEnd(CATEGORY_LEN, ' ')
+        const STATE_col = estadoLibro.padEnd(STATE_LEN, ' ')
+
+        return ` ${CODE_col}| ${TITLE_col}| ${CATEGORY_col}| ${STATE_col}`
+    })
+
+    return filasFormateadas
+}
+
 // ===== FUNCIONES DE BÚSQUEDA ===== 
 
 function buscarEstudiante(id) {
@@ -164,6 +184,21 @@ async function verRegistroDeEstudiantes() {
     limpiarPantalla()
 }
 
+async function verCatalogoDeLibros() {
+    mostrarEncabezado("CATÁLOGO DE LIBROS")
+    console.log(" Código | Título                        | Categoría | Estado ")
+    console.log(" —————————————————————————————————————————————————————————————————")
+    
+    const filasDeLibros = formatearLibros();
+
+    filasDeLibros.forEach(linea => {
+        console.log(linea)
+    })
+
+    await pausar("regresar")
+    limpiarPantalla()
+}
+
 // ===== Función Administradora ===== 
 async function iniciarPrograma() {
     await cargarPrograma(); // Se ejecuta solo una vez al inicio.
@@ -176,6 +211,10 @@ async function iniciarPrograma() {
             case "1":
                 limpiarPantalla();
                 await verRegistroDeEstudiantes(); // Esperamos a que la función termine.
+                break;
+            case "2":
+                limpiarPantalla();
+                await verCatalogoDeLibros();
                 break;
             case "0":
                 limpiarPantalla();
