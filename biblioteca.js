@@ -257,7 +257,7 @@ async function revisarEstadoDeEstudiante() {
     // Info financiera
     mostrarSubtitulo("INFORMACIÓN FINANCIERA")
     console.log(`Multas: $${estudiante.multas * 2}`)
-    console.log(`Estado: ${estudiante.multas < 0 ? "AL DÍA" : "PENDIENTE" }`)
+    console.log(`Estado: ${estudiante.multas < 0 ? "AL DÍA" : "PENDIENTE"}`)
 
     // Puede o no puede?
     console.log("  PUEDE SOLICITAR PRÉSTAMO: ")
@@ -269,6 +269,43 @@ async function revisarEstadoDeEstudiante() {
 
     await pausar("regresar")
     limpiarPantalla()
+}
+
+async function revisarEstadoDeLibro() {
+    // Mismo de verCatalogoDeLibros()
+    console.log(" Código | Título                        | Categoría | Estado ")
+    console.log(" —————————————————————————————————————————————————————————————————")
+
+    const filasDeLibros = formatearLibros();
+
+    filasDeLibros.forEach(linea => {
+        console.log(linea)
+    })
+
+    // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
+    console.log("")
+    const respuesta = await pregunta(">>> Ingrese el código del libro (o 0 para cancelar): ")
+    if (respuesta === "0") {
+        return;
+    } else {
+        // Asume que 'libros' es tu array original de objetos de libros
+        const libroQueBuscamos = libros.find(libro => libro.codigo.toString() === respuesta);
+        // Nota: Usé find() en lugar de filter() porque solo quieres UN libro.
+        // Hice .toString() para asegurar la comparación con 'respuesta' (que es un string).
+
+        if (libroQueBuscamos) {
+            console.log(`Código: ${libroQueBuscamos.codigo}`)
+            console.log(`Titulo: ${libroQueBuscamos.titulo}`)
+            console.log(`Categoría: ${libroQueBuscamos.categoria}`)
+            console.log(`Estado: ${libroQueBuscamos.disponible ? "DISPONIBLE" : "PRESTADO"}`)
+        } else {
+            console.log("Libro no encontrado")
+        }
+
+        await pausar("regresar")
+        limpiarPantalla()
+    }
+
 }
 
 // ===== Función Administradora ===== 
@@ -295,6 +332,10 @@ async function iniciarPrograma() {
             case "4":
                 limpiarPantalla();
                 await revisarEstadoDeEstudiante();
+                break;
+            case "5":
+                limpiarPantalla();
+                await revisarEstadoDeLibro();
                 break;
             case "0":
                 limpiarPantalla();
