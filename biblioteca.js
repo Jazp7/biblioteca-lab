@@ -49,16 +49,16 @@ function pregunta(texto) {
 function formatearEstudiantes() {
     // Definimos las longitudes máximas para cada columna, esto es clave para la alineación.
     const ID_LEN = 3;
-    const NOMBRE_LEN = 20;
+    const NOMBRE_LEN = 21;
     const GRADO_LEN = 7;
     const LIBROS_LEN = 8;
-    const MULTAS_LEN = 8;
+    const MULTAS_LEN = 10;
     const ESTADO_LEN = 8;
 
     const filasFormateadas = estudiantes.map(estudiante => {
         // Formatear el estado, las multas y el grado
         const estadoTexto = estudiante.activo ? "Activo" : "Inactivo";
-        const multasTexto = `${estudiante.multas}`;
+        const multasTexto = `$${(estudiante.multas * 2)}.00`;
         const gradoTexto = `${estudiante.grado}°`;
 
         // Aplicar el "padding" (espaciado) a cada columna
@@ -150,6 +150,16 @@ function mostrarEncabezado(titulo) {
     console.log("═".repeat(50) + "\n");
 }
 
+function mostrarEncabezadoSimple(titulo) {
+    console.log("\n" + "—".repeat(50));
+    console.log(`  ${titulo}`);
+    console.log("—".repeat(50) + "\n");
+}
+
+function mostrarSubtitulo(subtitulo) {
+    console.log(`\n  ${subtitulo}`);
+    console.log("═".repeat(50) + "\n");
+}
 
 // ===== Funcionalidades del sistema =====
 async function cargarPrograma() {
@@ -178,8 +188,8 @@ function Inicio() {
 
 async function verRegistroDeEstudiantes() {
     mostrarEncabezado("LISTA DE ESTUDIANTES")
-    console.log(" ID | Nombre               | Grado  | Libros  | Multas  | Estado")
-    console.log(" ————————————————————————————————————————————————————————————————")
+    console.log(" ID | Nombre               | Grado  | Libros  | Multas    | Estado")
+    console.log(" —————————————————————————————————————————————————————————————————————")
 
 
     // Llama a la función auxiliar para obtener el array de líneas formateadas
@@ -225,6 +235,42 @@ async function verLibrosDisponibles() {
     limpiarPantalla();
 }
 
+async function revisarEstadoDeEstudiante() {
+    const id = await pregunta("Ingrese el id del estudiante: ")
+    const estudiante = buscarEstudiante(id)
+
+    const activo = estudiante.activo ? "Activo" : "Inactivo"
+
+    // Información general
+    mostrarEncabezadoSimple("INFORMACIÓN DEL ESTUDIANTE")
+    console.log(`ID: ${estudiante.id}`)
+    console.log("Nombre: ", estudiante.nombre)
+    console.log(`Grado: ${estudiante.grado}°`)
+    console.log(`Estado de cuenta: ${activo}`)
+
+    // Info de préstamos
+    mostrarSubtitulo("INFORMACIÓN DE PRÉSTAMOS")
+    const limite = obtenerLimiteLibros(estudiante.grado)
+    console.log(`Libros prestados: ${estudiante.libros} de ${limite}`)
+    console.log(`Capacidad disponible: ${limite - estudiante.libros}`)
+
+    // Info financiera
+    mostrarSubtitulo("INFORMACIÓN FINANCIERA")
+    console.log(`Multas: $${estudiante.multas * 2}`)
+    console.log(`Estado: ${estudiante.multas < 0 ? "AL DÍA" : "PENDIENTE" }`)
+
+    // Puede o no puede?
+    console.log("  PUEDE SOLICITAR PRÉSTAMO: ")
+    if (estudiante.activo == false || estudiante.multas > 0) {
+        console.log("    NO - No puede solicitar préstamo")
+    } else {
+        console.log("    SÏ - Puede solicitar préstamo")
+    }
+
+    await pausar("regresar")
+    limpiarPantalla()
+}
+
 // ===== Función Administradora ===== 
 async function iniciarPrograma() {
     await cargarPrograma(); // Se ejecuta solo una vez al inicio.
@@ -245,7 +291,11 @@ async function iniciarPrograma() {
             case "3":
                 limpiarPantalla();
                 await verLibrosDisponibles();
-                break
+                break;
+            case "4":
+                limpiarPantalla();
+                await revisarEstadoDeEstudiante();
+                break;
             case "0":
                 limpiarPantalla();
                 console.log("\nSaliendo del sistema. ¡Hasta pronto!");
