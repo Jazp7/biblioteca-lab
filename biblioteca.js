@@ -57,7 +57,7 @@ function formatearEstudiantes() {
 
     const filasFormateadas = estudiantes.map(estudiante => {
         // Formatear el estado, las multas y el grado
-        const estadoTexto = estudiante.activo ? "Activo" : "Inactivo";
+        const estadoTexto = estudiante.activo ? "Activo" : "Inactivo"
         const multasTexto = `$${(estudiante.multas * 2)}.00`;
         const gradoTexto = `${estudiante.grado}°`;
 
@@ -239,6 +239,12 @@ async function revisarEstadoDeEstudiante() {
     const id = await pregunta("Ingrese el id del estudiante: ")
     const estudiante = buscarEstudiante(id)
 
+    if (estudiante === null) {
+        console.log("Estudiante no encontrado")
+        await pausar("regresar")
+        limpiarPantalla()
+        return
+    }
     const activo = estudiante.activo ? "Activo" : "Inactivo"
 
     // Información general
