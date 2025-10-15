@@ -109,6 +109,26 @@ function verificarSiHayLibrosDisponibles() {
     }
 }
 
+function mostrarInformacion(estudianteOlibro) {
+    if (estudianteOlibro == "" || estudianteOlibro == null) {
+        console.log("\nMissing parameter on function: mostrarInformacion()")
+    }
+
+    if (estudianteOlibro == "estudiantes") {
+        console.log("   ESTUDIANTES REGISTRADOS:\n")
+        estudiantes.forEach(student => {
+            console.log(`ID: ${student.id} - ${student.nombre} - ${student.grado}° - ${student.activo ? "Activo" : "Inactivo"}`)
+        })
+    }
+
+    if (estudianteOlibro == "libros") {
+        console.log("  LIBROS DISPONIBLES:\n")
+        libros.forEach(libro => {
+            console.log(`${libro.codigo}: ${libro.titulo} [${libro.categoria}]`)
+        })
+    }
+}
+
 // ===== FUNCIONES DE BÚSQUEDA ===== 
 
 function buscarEstudiante(id) {
@@ -314,6 +334,148 @@ async function revisarEstadoDeLibro() {
 
 }
 
+async function realizarPrestamo() {
+    let estudianteEncontrado = null
+    let libroEncontrado = null
+
+    while (true) {
+        limpiarPantalla()
+        mostrarEncabezado("REALIZAR PRÉSTAMO")
+
+        // Parte del Estudiante
+        if (estudianteEncontrado == null) {
+            mostrarInformacion("estudiantes")
+
+            let id = await pregunta(">>> Ingrese el ID del estudiante (o 0 para cancelar): ")
+            if (id.trim() == "0") {
+                return
+            }
+            if (id.trim() == "") {
+                console.log("Ingrese un id válido")
+                await pausar("intentar de nuevo")
+                continue
+            }
+
+            estudianteEncontrado = buscarEstudiante(Number(id))
+
+            if (estudianteEncontrado == null) {
+                console.log("Estudiante no encontrado")
+                await pausar("intentar de nuevo")
+                continue
+            }
+            
+            console.log(`Estudiante encontrado: ${estudianteEncontrado.nombre}\n`)           
+        }
+
+        // Parte del libro
+        if (libroEncontrado == null) {
+            mostrarInformacion("libros")
+
+            let libro = await pregunta(">>> Ingrese el código del libro (o 0 para cancelar): ")
+            if (libro.trim() == "0") {
+                return
+            }
+            if (libro.trim() == "") {
+                console.log("Ingrese un código de libro válido")
+                await pausar("continuar")
+            }
+
+            libroEncontrado = buscarLibro(libro)
+
+            if (libroEncontrado == null) {
+                console.log("Libro no encontrado")
+                await pausar("intentar de nuevo")
+                continue
+            }
+
+            console.log(`Libro encontrado: ${libroEncontrado.titulo}`)
+
+            mostrarEncabezadoSimple("VALIDANDO PRÉSTAMO...")
+            
+            const limiteLibros = obtenerLimiteLibros(estudianteEncontrado.grado);
+            let puedePedirPrestado = true;
+
+            if (!estudianteEncontrado.activo) {
+                console.log("  [X] El estudiante no tiene la cuenta activa.");
+                puedePedirPrestado = false;
+            }
+            if (estudianteEncontrado.multas > 0) {
+                console.log("  [X] El estudiante tiene multas pendientes.");
+                puedePedirPrestado = false;
+            }
+            if (estudianteEncontrado.librosPrestados >= limiteLibros) {
+                console.log(`  [X] El estudiante alcanzó el límite de ${limiteLibros} libros.`);
+                puedePedirPrestado = false;
+            }
+            if (!libroEncontrado.disponible) {
+                console.log("  [X] El libro no está disponible.");
+                puedePedirPrestado = false;
+            }
+
+            if (!puedePedirPrestado) {
+                await pausar("intentar de nuevo");
+                estudianteEncontrado = null;
+                libroEncontrado = null;
+                continue;
+            } else {
+                console.log("  [✓] ¡Préstamo validado! El estudiante y el libro cumplen los requisitos.");
+            }
+        }
+
+        // Pregunta de Verificación
+        if (estudianteEncontrado !== null && libroEncontrado !== null) {
+            mostrarEncabezadoSimple("RESUMEN DEL PRÉSTAMO")
+            console.log(`Estudiante: ${estudianteEncontrado.nombre}`)
+            console.log(`Libro: ${libroEncontrado.titulo}`)
+            console.log("Días de préstamo: 7 días")
+            console.log("")
+
+            const verificacion = await pregunta("¿Confirmar préstamo? (S/N): ")
+            if (verificacion.toLowerCase() !== "s") {
+                console.log("\nPréstamo cancelado.");
+                await pausar("regresar al menú principal")
+                return
+            }
+
+            // 1. Actualizar datos del libro y estudiante
+            libroEncontrado.disponible = false;
+            estudianteEncontrado.librosPrestados++;
+
+            // 2. Crear y guardar el registro del préstamo
+            const idPrestamo = prestamos.length + 1;
+            const fechaPrestamo = new Date();
+            const fechaDevolucion = new Date();
+            fechaDevolucion.setDate(fechaPrestamo.getDate() + 7);
+
+            const nuevoPrestamo = {
+                id: idPrestamo,
+                idEstudiante: estudianteEncontrado.id,
+                codigoLibro: libroEncontrado.codigo,
+                fechaPrestamo: fechaPrestamo,
+                fechaDevolucion: fechaDevolucion,
+                devuelto: false
+            };
+            prestamos.push(nuevoPrestamo);
+            
+            // 3. Mostrar el recibo del préstamo
+            mostrarEncabezado("PRÉSTAMO REALIZADO EXITOSAMENTE");
+            console.log(`ID Préstamo: ${idPrestamo}`);
+            console.log(`Estudiante: ${estudianteEncontrado.nombre}`);
+            console.log(`Libro: ${libroEncontrado.titulo}`);
+            console.log(`Fecha de préstamo: ${fechaPrestamo.toLocaleDateString('es-ES')}`);
+            console.log(`Fecha límite de devolución: ${fechaDevolucion.toLocaleDateString('es-ES')}`);
+            console.log("");
+            const limite = obtenerLimiteLibros(estudianteEncontrado.grado);
+            console.log(`Libros actuales del estudiante: ${estudianteEncontrado.librosPrestados}/${limite}`);
+            console.log("\n IMPORTANTE: Devolver el libro antes de la fecha límite");
+            console.log("   para evitar multas de $2.00 por día de retraso");
+
+            await pausar("regresar al menú principal");
+            return; // Salir de la función realizarPrestamo para volver al menú
+        }
+    }
+}
+
 // ===== Función Administradora ===== 
 async function iniciarPrograma() {
     await cargarPrograma(); // Se ejecuta solo una vez al inicio.
@@ -343,6 +505,9 @@ async function iniciarPrograma() {
                 limpiarPantalla();
                 await revisarEstadoDeLibro();
                 break;
+            case "6":
+                await realizarPrestamo()
+                break
             case "0":
                 limpiarPantalla();
                 console.log("\nSaliendo del sistema. ¡Hasta pronto!");
