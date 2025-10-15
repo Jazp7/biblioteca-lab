@@ -363,8 +363,8 @@ async function realizarPrestamo() {
                 await pausar("intentar de nuevo")
                 continue
             }
-            
-            console.log(`Estudiante encontrado: ${estudianteEncontrado.nombre}\n`)           
+
+            console.log(`Estudiante encontrado: ${estudianteEncontrado.nombre}\n`)
         }
 
         // Parte del libro
@@ -391,7 +391,7 @@ async function realizarPrestamo() {
             console.log(`Libro encontrado: ${libroEncontrado.titulo}`)
 
             mostrarEncabezadoSimple("VALIDANDO PRÉSTAMO...")
-            
+
             const limiteLibros = obtenerLimiteLibros(estudianteEncontrado.grado);
             let puedePedirPrestado = true;
 
@@ -456,7 +456,7 @@ async function realizarPrestamo() {
                 devuelto: false
             };
             prestamos.push(nuevoPrestamo);
-            
+
             // 3. Mostrar el recibo del préstamo
             mostrarEncabezado("PRÉSTAMO REALIZADO EXITOSAMENTE");
             console.log(`ID Préstamo: ${idPrestamo}`);
@@ -474,6 +474,121 @@ async function realizarPrestamo() {
             return; // Salir de la función realizarPrestamo para volver al menú
         }
     }
+}
+
+async function devolverLibro() {
+    while (true) {
+        limpiarPantalla();
+        mostrarEncabezado("DEVOLVER LIBRO");
+
+        const prestamosActivos = prestamos.filter(p => !p.devuelto);
+
+        if (prestamosActivos.length === 0) {
+            console.log("No hay préstamos activos para devolver.");
+            await pausar("regresar al menú principal");
+            return;
+        }
+
+        console.log("PRÉSTAMOS ACTIVOS: \n");
+        prestamosActivos.forEach(prestamo => {
+            const estudiante = buscarEstudiante(prestamo.idEstudiante);
+            const libro = buscarLibro(prestamo.codigoLibro);
+            if (estudiante && libro) {
+                console.log(`ID: ${prestamo.id} | ${estudiante.nombre} | ${libro.titulo}`);
+                console.log(`  Prestado: ${prestamo.fechaPrestamo.toLocaleDateString('es-ES')} | Vence: ${prestamo.fechaDevolucion.toLocaleDateString('es-ES')}`);
+            }
+        });
+
+        let idPrestamo = await pregunta("\n>>> Ingrese el ID del préstamo a devolver (o 0 para cancelar): ");
+
+        if (idPrestamo.trim() === "0") {
+            return;
+        }
+
+        const prestamo = prestamos.find(p => p.id === Number(idPrestamo) && !p.devuelto);
+
+        if (!prestamo) {
+            console.log("ID de préstamo no válido o ya devuelto.");
+            await pausar("intentar de nuevo");
+            continue;
+        }
+
+        const estudiante = buscarEstudiante(prestamo.idEstudiante);
+        const libro = buscarLibro(prestamo.codigoLibro);
+        const fechaActual = new Date();
+
+        mostrarEncabezadoSimple("Información de la devolución");
+        console.log(`Estudiante: ${estudiante.nombre}`);
+        console.log(`Libro: ${libro.titulo}`);
+        console.log(`Fecha de préstamo: ${prestamo.fechaPrestamo.toLocaleDateString('es-ES')}`);
+        console.log(`Fecha límite: ${prestamo.fechaDevolucion.toLocaleDateString('es-ES')}`);
+        console.log(`Fecha de devolución: ${fechaActual.toLocaleDateString('es-ES')}`);
+        console.log("");
+
+        let verificacion = await pregunta("¿Confirmar devolución? (S/N): ");
+        if (verificacion.toLowerCase() !== 's') {
+            console.log("\nDevolución cancelada.");
+            await pausar("regresar");
+            continue;
+        }
+
+        // Procesar devolución
+        libro.disponible = true;
+        estudiante.librosPrestados--;
+        prestamo.devuelto = true;
+        prestamo.fechaDevolucionReal = fechaActual;
+
+        // Calcular multas si es necesario
+        const diasDeRetraso = Math.max(0, Math.ceil((fechaActual - prestamo.fechaDevolucion) / (1000 * 60 * 60 * 24)));
+        
+        if (diasDeRetraso > 0) {
+            const multa = diasDeRetraso * 2; // $2 por día de retraso
+            estudiante.multas += multa;
+            mostrarEncabezadoSimple("MULTA GENERADA");
+            console.log(`El libro se ha devuelto con ${diasDeRetraso} día(s) de retraso.`);
+            console.log(`Se ha generado una multa de $${multa}.00`);
+            console.log(`Multa total acumulada para ${estudiante.nombre}: $${estudiante.multas}.00`);
+        } else {
+            mostrarEncabezadoSimple("DEVOLUCIÓN PROCESADA");
+            console.log("El libro ha sido devuelto a tiempo.");
+            console.log("No se generaron multas.");
+        }
+
+        await pausar("continuar");
+        limpiarPantalla()
+        // Bucle para volver a mostrar el menú de devolución
+        // por si se quiere devolver un segundo libro
+    }
+}
+
+async function verHistorialdePrestamos() {
+    limpiarPantalla();
+    mostrarEncabezado("HISTORIAL DE PRÉSTAMOS");
+
+    if (prestamos.length === 0) {
+        console.log("No hay préstamos en el historial.");
+    } else {
+        console.log(`Total de préstamos: ${prestamos.length}\n`);
+
+        for (const prestamo of prestamos) {
+            const estudiante = buscarEstudiante(prestamo.idEstudiante);
+            const libro = buscarLibro(prestamo.codigoLibro);
+
+            if (estudiante && libro) {
+                mostrarEncabezadoSimple(`Préstamo #${prestamo.id}`);
+                console.log(`Estudiante: ${estudiante.nombre} (ID: ${estudiante.id})`);
+                console.log(`Libro: ${libro.titulo} (${libro.codigo})`);
+                console.log(`Fecha de préstamo: ${prestamo.fechaPrestamo.toLocaleDateString('es-ES')}`);
+                console.log(`Fecha límite: ${prestamo.fechaDevolucion.toLocaleDateString('es-ES')}`);
+                
+                const estado = prestamo.devuelto ? `Devuelto el ${prestamo.fechaDevolucionReal.toLocaleDateString('es-ES')}` : "Activo";
+                console.log(`Estado: ${estado}`);
+                console.log("");
+            }
+        }
+    }
+
+    await pausar("regresar al menú principal");
 }
 
 // ===== Función Administradora ===== 
@@ -507,6 +622,13 @@ async function iniciarPrograma() {
                 break;
             case "6":
                 await realizarPrestamo()
+                break
+            case "7":
+                await devolverLibro()
+                break
+            case "8":
+                limpiarPantalla()
+                await verHistorialdePrestamos()
                 break
             case "0":
                 limpiarPantalla();
